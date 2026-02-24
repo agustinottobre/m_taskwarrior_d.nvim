@@ -123,8 +123,11 @@ function M.get_tasks_by(uuids)
 end
 
 function M.check_if_task_is_blocked(uuid)
-  local _, result = M.execute_task_args({ "task", uuid, "-BLOCKED" }, true)
-  if #result > 0 then
+    -- Use +BLOCKED export to check if task IS blocked
+    -- This avoids the error that -BLOCKED causes with specific UUIDs
+    local code, result = M.execute_task_args({ "task", uuid, "+BLOCKED", "export" }, true)
+    -- If there's an error or no result, task is not blocked
+  if code ~= 0 or result == nil or #result == 0 or result == "[]" then
     return false
   end
   return true
