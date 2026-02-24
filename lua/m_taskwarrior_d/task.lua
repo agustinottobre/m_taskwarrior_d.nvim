@@ -83,6 +83,11 @@ function M.modify_task_status(task_id, new_status)
   if M.status_map[new_status] == "active" then
     M.execute_task_args({ "task", task_id, "modify", "status:pending" })
     M.execute_task_args({ "task", task_id, "start" })
+  elseif M.status_map[new_status] == "pending" then
+  -- When setting to pending, we need to also stop the task to clear the Start date
+  -- Otherwise the task remains "active" in Taskwarrior due to having a Start date
+    M.execute_task_args({ "task", task_id, "modify", "status:pending" })
+    M.execute_task_args({ "task", task_id, "stop" })
   else
     local status = M.status_map[new_status]
     M.execute_task_args({ "task", task_id, "modify", "status:" .. status })
