@@ -340,6 +340,7 @@ end
 
 function M.add_or_sync_task(line, replace_desc)
   local list_sb, _, status = string.match(line, M.checkbox_pattern.lua)
+  local original_status = status  -- Save user's intent
   local desc = string.gsub(line, M.checkbox_pattern.lua, "")
   local result
   local skip_modify = false
@@ -383,7 +384,12 @@ function M.add_or_sync_task(line, replace_desc)
         else
           new_task_status_sym = ">"
         end
-        status = new_task_status_sym
+        -- Preserve user's intent: if original was not pending, use it
+        if original_status and original_status ~= " " then
+          status = original_status
+        else
+          status = new_task_status_sym
+        end
         uuid = new_task.uuid
         local spaces = count_leading_spaces(line)
         if replace_desc then
