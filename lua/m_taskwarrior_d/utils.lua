@@ -340,10 +340,9 @@ end
 
 function M.add_or_sync_task(line, replace_desc)
   local list_sb, _, status = string.match(line, M.checkbox_pattern.lua)
-local original_status = status  -- Save user's intent
   local desc = string.gsub(line, M.checkbox_pattern.lua, "")
   local result
-  local should_skip_modify = false  -- Flag to skip modify after restoring deleted task
+  local skip_modify = false
   local _, _, uuid = string.match(line, M.id_part_pattern.lua)
   if uuid == nil then
     uuid = require("m_taskwarrior_d.task").add_task(desc)
@@ -366,13 +365,12 @@ local original_status = status  -- Save user's intent
         .. (M.comment_suffix ~= "" and " " .. M.comment_suffix or M.comment_suffix)
     else
       local new_task = require("m_taskwarrior_d.task").get_task_by(uuid, "task")
+      -- If task is deleted, restore to pending and clear start date
       if new_task and new_task.status == "deleted" then
         require("m_taskwarrior_d.task").modify_task_status(uuid, " ")
-        -- Also stop to clear the start date, so task becomes purely pending
         require("m_taskwarrior_d.task").execute_task_args({ "task", uuid, "stop" })
         new_task.status = "pending"
-        -- Skip the final modify at line 428 since we already restored it
-        should_skip_modify = true
+        skip_modify = true
       end
       if new_task then
         local active = false
@@ -385,12 +383,7 @@ local original_status = status  -- Save user's intent
         else
           new_task_status_sym = ">"
         end
-        -- Preserve user's intent: if original was not pending, use it
-        if original_status and original_status ~= " " then
-          status = original_status
-        else
-          status = new_task_status_sym
-        end
+        status = new_task_status_sym
         uuid = new_task.uuid
         local spaces = count_leading_spaces(line)
         if replace_desc then
@@ -399,7 +392,7 @@ local original_status = status  -- Save user's intent
             .. list_sb
             .. " "
             .. M.checkbox_prefix
-            .. status
+            .. new_task_status_sym
             .. M.checkbox_suffix
             .. " "
             .. M.trim(desc)
@@ -413,7 +406,7 @@ local original_status = status  -- Save user's intent
             .. list_sb
             .. " "
             .. M.checkbox_prefix
-            .. status
+            .. new_task_status_sym
             .. M.checkbox_suffix
             .. " "
             .. new_task.description
@@ -421,14 +414,14 @@ local original_status = status  -- Save user's intent
             .. " $id{"
             .. new_task.uuid
             .. "}"
+            .. (M.comment_suffix ~= "" and " " .. M.comment_suffix or M.comment_suffix)
         end
       else
         result = line
       end
     end
   end
-  -- Only modify status if we didn't just restore a deleted task
-  if not should_skip_modify then
+  if not skip_modify then
     require("m_taskwarrior_d.task").modify_task_status(uuid, status)
   end
   return result, uuid
