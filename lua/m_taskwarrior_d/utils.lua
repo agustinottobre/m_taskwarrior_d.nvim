@@ -364,6 +364,10 @@ function M.add_or_sync_task(line, replace_desc)
         .. (M.comment_suffix ~= "" and " " .. M.comment_suffix or M.comment_suffix)
     else
       local new_task = require("m_taskwarrior_d.task").get_task_by(uuid, "task")
+      if new_task and new_task.status == "deleted" then
+        require("m_taskwarrior_d.task").modify_task_status(uuid, " ")
+        new_task.status = "pending"
+      end
       if new_task then
         local active = false
         if new_task.status == "pending" and new_task["start"] ~= nil then
