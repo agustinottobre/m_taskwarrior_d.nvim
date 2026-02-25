@@ -421,11 +421,12 @@ local original_status = status  -- Save user's intent
             .. " $id{"
             .. new_task.uuid
             .. "}"
-            .. (M.comment_suffix ~= "" and " " .. M.comment_suffix or M.comment_suffix)
         end
       else
         result = line
       end
+    end
+  end
   -- Only modify status if we didn't just restore a deleted task
   if not should_skip_modify then
     require("m_taskwarrior_d.task").modify_task_status(uuid, status)
