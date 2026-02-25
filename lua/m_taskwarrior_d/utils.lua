@@ -367,6 +367,8 @@ local original_status = status  -- Save user's intent
       local new_task = require("m_taskwarrior_d.task").get_task_by(uuid, "task")
       if new_task and new_task.status == "deleted" then
         require("m_taskwarrior_d.task").modify_task_status(uuid, " ")
+        -- Also stop to clear the start date, so task becomes purely pending
+        require("m_taskwarrior_d.task").execute_task_args({ "task", uuid, "stop" })
         new_task.status = "pending"
       end
       if new_task then
