@@ -394,7 +394,7 @@ local original_status = status  -- Save user's intent
             .. list_sb
             .. " "
             .. M.checkbox_prefix
-            .. new_task_status_sym
+            .. status
             .. M.checkbox_suffix
             .. " "
             .. M.trim(desc)
@@ -408,7 +408,7 @@ local original_status = status  -- Save user's intent
             .. list_sb
             .. " "
             .. M.checkbox_prefix
-            .. new_task_status_sym
+            .. status
             .. M.checkbox_suffix
             .. " "
             .. new_task.description
