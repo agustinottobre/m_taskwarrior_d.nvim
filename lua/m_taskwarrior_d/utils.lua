@@ -343,6 +343,7 @@ function M.add_or_sync_task(line, replace_desc)
 local original_status = status  -- Save user's intent
   local desc = string.gsub(line, M.checkbox_pattern.lua, "")
   local result
+  local should_skip_modify = false  -- Flag to skip modify after restoring deleted task
   local _, _, uuid = string.match(line, M.id_part_pattern.lua)
   if uuid == nil then
     uuid = require("m_taskwarrior_d.task").add_task(desc)
@@ -370,6 +371,8 @@ local original_status = status  -- Save user's intent
         -- Also stop to clear the start date, so task becomes purely pending
         require("m_taskwarrior_d.task").execute_task_args({ "task", uuid, "stop" })
         new_task.status = "pending"
+        -- Skip the final modify at line 428 since we already restored it
+        should_skip_modify = true
       end
       if new_task then
         local active = false
@@ -423,9 +426,10 @@ local original_status = status  -- Save user's intent
       else
         result = line
       end
-    end
+  -- Only modify status if we didn't just restore a deleted task
+  if not should_skip_modify then
+    require("m_taskwarrior_d.task").modify_task_status(uuid, status)
   end
-  require("m_taskwarrior_d.task").modify_task_status(uuid, status)
   return result, uuid
 end
 
